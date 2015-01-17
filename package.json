@@ -11,6 +11,7 @@
   "keywords": [ "gobble-plugin", "gobble", "css", "concat" ],
   "dependencies": {
     "rework": "^1",
-    "rework-import": "^2"
+    "rework-import": "^2",
+    "rework-plugin-url": "^1"
   }
 }
