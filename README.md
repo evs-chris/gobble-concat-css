@@ -12,6 +12,7 @@ First, you need to have gobble installed - see the [gobble readme](https://githu
 
 * sourcemap - boolean - defaults to true - whether or not to generate sourcemaps
 * dest - string - defaults to `'bundle.css'` - the name of the file to output
+* debug - boolean - `console.log` each url that is adjusted
 
 ```js
 gobble('path-with-css').transform('concat-css', { dest: 'assets/bundle.css' });
