@@ -41,7 +41,7 @@ function concatCss(indir, outdir, opts) {
         .map(function(f) { return '@import "./' + outdir.replace(process.cwd(), '') + '/' + f + '";'; })
         .join('\n');
       var output = rework(str).use(imprt()).toString(sourcemap ? { sourcemap: true, sourcemapAsObject: true } : {});
-      output.code += '\n' + '/*# sourceMappingURL=' + map + ' */';
+      output.code += '\n' + '/*# sourceMappingURL=' + path.basename(map) + '\n */';
 
       // delete leftover files from step1
       ctx.log('cleaning up...');
