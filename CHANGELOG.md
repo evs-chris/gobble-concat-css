@@ -1,3 +1,7 @@
+## 0.1.0
+
+* Allow specifying an entry point, in addition to the default mode of creating one containing an import for all css files automatically.
+
 ## 0.0.3
 
 * __BUG__: Fix relativity of the sourceMappingURL in the end comment.

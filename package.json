@@ -1,7 +1,7 @@
 {
   "name": "gobble-concat-css",
   "license": "MIT",
-  "version": "0.0.3",
+  "version": "0.1.0",
   "description": "A gobble plugin to concatenate css files",
   "homepage": "https://github.com/evs-chris/gobble-concat-css",
   "author": { "name": "Chris Reeves" },
