@@ -39,25 +39,16 @@ function concatCss(indir, outdir, opts) {
 function concatAll(opts) {
   opts.root = opts.outdir;
   return findFiles(opts).then(function() {
-    var step1 = opts.sander.Promise.all(opts.files.map(function(f) {
-      return opts.sander.readFile(opts.indir, f).then(function(content) {
-        opts.str = content.toString();
-        return opts.sander.writeFile(opts.outdir, f, fixUrls(f, opts));
-      });
-    }));
+    var str = opts.files
+      .map(function(f) { return '@import "' + f + '";'; })
+      .join('\n');
 
-    return step1.then(function() {
-      var str = opts.files
-        .map(function(f) { return '@import "' + f + '";'; })
-        .join('\n');
-
-      opts.str = str;
-      return runConcat(opts);
-    });
+    opts.str = str;
+    return runConcat(opts);
   });
 }
 
-function fixUrls(file, opts) {
+function fixUrls(file, str, opts) {
   var fn = function(u) {
     var res;
     if (absolute.test(u)) res = u;
@@ -65,8 +56,7 @@ function fixUrls(file, opts) {
     if (opts.debug) console.log('replacing', u, 'with', res);
     return res;
   };
-  opts.str = rework(opts.str).use(url(fn)).toString();
-  return opts.str;
+  return rework(str).use(url(fn)).toString();
 }
 
 function concatFrom(opts) {
@@ -74,23 +64,30 @@ function concatFrom(opts) {
   return findFiles(opts).then(function() {
     return opts.sander.readFile(opts.indir, opts.entry).then(function(content) {
       opts.str = content.toString();
-      fixUrls(opts.entry, opts);
       return runConcat(opts);
     });
   });
 }
 
 function runConcat(opts) {
-  opts.ctx.log('bundling css...');
-  var output = rework(opts.str).use(imprt({ path: opts.root })).toString(opts.sourcemap ? { sourcemap: true, sourcemapAsObject: true } : {});
-  output.code += '\n' + '//# sourceMappingURL=' + path.basename(opts.map);
+  // copy all of the files over to start with fixed urls
+  return opts.sander.Promise.all(opts.files.map(function(f) {
+    return opts.sander.readFile(opts.indir, f).then(function(content) {
+      return opts.sander.writeFile(opts.outdir, f, fixUrls(f, content.toString(), opts));
+    });
+  })).then(function() {
+    opts.ctx.log('bundling css...');
+    var output = rework(opts.str).use(imprt({ path: opts.root })).toString(opts.sourcemap ? { sourcemap: true, sourcemapAsObject: true } : {});
+    output.code += '\n' + '//# sourceMappingURL=' + path.basename(opts.map);
 
-  // delete leftover files from step1
-  opts.ctx.log('cleaning up...');
-  return Promise.all(opts.files.map(function(f) { return opts.sander.unlink(opts.outdir, f).then(noop, noop); })).then(function() {
-    // write out the bundle
-    opts.ctx.log('saving bundle...');
-    return opts.sander.writeFile(opts.outdir, opts.dest, output.code)
+    // delete leftover files from step1
+    opts.ctx.log('cleaning up...');
+    return Promise.all(opts.files.map(function(f) { return opts.sander.unlink(opts.outdir, f).then(noop, noop); })).then(function() {
+      // switch urls back to relative
+      output.code = output.code.replace(new RegExp(opts.outdir, 'g'), '.');
+      // write out the bundle
+      opts.ctx.log('saving bundle...');
+      return opts.sander.writeFile(opts.outdir, opts.dest, output.code)
       .then(function() {
         opts.ctx.log('saving source map...');
         return opts.sander.writeFile(opts.outdir, opts.map, JSON.stringify(output.map)).then(function() {
@@ -98,16 +95,17 @@ function runConcat(opts) {
           return Promise.all(opts.others.map(function(f) { return opts.sander.link(opts.indir, f).to(opts.outdir, f); }));
         });
       });
+    });
   });
 }
 
 function noop() {}
 
 function findFiles(opts) {
+  opts.ctx.log('finding css files...');
   return opts.sander.lsr(opts.indir).then(function(files) {
     opts.others = files.filter(function(f) { return !css.test(f) && !cssMap.test(f); });
     opts.files = files.filter(function(f) { return css.test(f); });
-    opts.ctx.log('finding css files...');
   });
 }
 
