@@ -1,3 +1,7 @@
+## 0.1.1
+
+* __BUG__: Re-relative-ize urls after reworking, so that any references don't end up pointing to an absolute gobble path.
+
 ## 0.1.0
 
 * Allow specifying an entry point, in addition to the default mode of creating one containing an import for all css files automatically.
